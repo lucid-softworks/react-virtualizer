@@ -135,6 +135,12 @@ h1 {
   padding: 0.7rem 1.25rem;
 }
 
+.viewport-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22px;
+  height: min(560px, 64vh);
+}
+
 .viewport {
   background: repeating-linear-gradient(
     to bottom,
@@ -148,9 +154,22 @@ h1 {
     #e1e6e2 116px
   );
   contain: strict;
-  height: min(560px, 64vh);
+  height: 100%;
   overflow: auto;
   overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar {
+  accent-color: #203b33;
+  height: 100%;
+  margin: 0;
+  width: 22px;
+  writing-mode: vertical-lr;
 }
 
 .spacer {

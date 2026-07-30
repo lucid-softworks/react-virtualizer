@@ -130,6 +130,25 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
     instance.getSnapshot,
   );
 
+  const renderScrollTarget = useCallback(
+    (
+      element: HTMLElement,
+      target: number,
+      updateScrollPosition: boolean,
+    ): void => {
+      preparingScrollReference.current = true;
+      try {
+        flushSync(() => instance.setViewport(target, element.clientHeight));
+      } finally {
+        preparingScrollReference.current = false;
+      }
+      if (updateScrollPosition) {
+        setElementScroll(element, instance.scrollOffset, "auto");
+      }
+    },
+    [instance],
+  );
+
   const applyAdjustment = useCallback(
     (adjustment: number): void => {
       if (adjustment === 0 || preparingScrollReference.current) {
@@ -262,17 +281,7 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
       if (controlsScrollPosition) {
         event.preventDefault();
       }
-      preparingScrollReference.current = true;
-      try {
-        flushSync(() =>
-          instance.setViewport(target, scrollElement.clientHeight),
-        );
-      } finally {
-        preparingScrollReference.current = false;
-      }
-      if (controlsScrollPosition) {
-        scrollElement.scrollTop = instance.scrollOffset;
-      }
+      renderScrollTarget(scrollElement, target, controlsScrollPosition);
     };
     scrollElement.addEventListener("scroll", onScroll, { passive: true });
     if (options.synchronousWheelScrolling === true) {
@@ -290,7 +299,12 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
       observer?.disconnect();
       scrollElementReference.current = null;
     };
-  }, [instance, options.synchronousWheelScrolling, scrollElement]);
+  }, [
+    instance,
+    options.synchronousWheelScrolling,
+    renderScrollTarget,
+    scrollElement,
+  ]);
 
   useBrowserLayoutEffect(() => {
     const observer = itemResizeObserverReference.current;
@@ -320,12 +334,13 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
       }
       const target = instance.clampOffset(offset);
       const behavior = scrollOptions.behavior ?? "auto";
-      setElementScroll(scrollElement, target, behavior);
       if (behavior === "auto") {
-        instance.setViewport(target, scrollElement.clientHeight);
+        renderScrollTarget(scrollElement, target, true);
+      } else {
+        setElementScroll(scrollElement, target, behavior);
       }
     },
-    [instance, scrollElement],
+    [instance, renderScrollTarget, scrollElement],
   );
 
   const scrollToIndex = useCallback(
