@@ -1,6 +1,6 @@
 {
   "name": "@lucid-softworks/react-virtualizer",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "React bindings for headless list virtualization.",
   "keywords": [
     "headless",
