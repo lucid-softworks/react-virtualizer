@@ -55,8 +55,13 @@ anchor to survive prepends or reordering.
 `overscanPixels` keeps a scroll-axis buffer mounted around the viewport. A
 buffer of one or two viewport lengths helps native scrolling stay inside the
 committed DOM range. If a high-velocity scroll still escapes that range, the
-React adapter synchronously commits the new range to avoid exposing the empty
-spacer.
+React adapter synchronously commits the new range to minimize how long the
+browser is ahead of the rendered content.
+
+Browser-native threaded scrolling can outrun any finite JavaScript-rendered
+range for a frame. Products that must never expose an empty surface should
+give the spacer a lightweight placeholder background or layer; real rows can
+cover it once committed. The bundled demo shows this pattern.
 
 `initialRect` supplies an initial viewport height for server rendering:
 
