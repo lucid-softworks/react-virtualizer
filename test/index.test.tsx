@@ -237,6 +237,27 @@ describe("useVirtualizer", () => {
     expect(result.current.visibleRange?.startIndex).toBe(5);
   });
 
+  it("prepares non-cancelable wheel destinations without moving scrollTop", () => {
+    const { result } = renderHook(() =>
+      useVirtualizer({
+        ...baseOptions,
+        synchronousWheelScrolling: true,
+      }),
+    );
+    const scrollElement = createElement(100);
+    act(() => result.current.scrollElementRef(scrollElement));
+    const event = new WheelEvent("wheel", {
+      cancelable: false,
+      deltaY: 40,
+    });
+
+    act(() => scrollElement.dispatchEvent(event));
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(scrollElement.scrollTop).toBe(0);
+    expect(result.current.visibleRange?.startIndex).toBe(2);
+  });
+
   it("applies its initial offset when the container attaches", () => {
     const { result } = renderHook(() =>
       useVirtualizer({

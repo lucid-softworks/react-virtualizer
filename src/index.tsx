@@ -258,7 +258,10 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
         return;
       }
 
-      event.preventDefault();
+      const controlsScrollPosition = event.cancelable;
+      if (controlsScrollPosition) {
+        event.preventDefault();
+      }
       preparingScrollReference.current = true;
       try {
         flushSync(() =>
@@ -267,7 +270,9 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
       } finally {
         preparingScrollReference.current = false;
       }
-      scrollElement.scrollTop = instance.scrollOffset;
+      if (controlsScrollPosition) {
+        scrollElement.scrollTop = instance.scrollOffset;
+      }
     };
     scrollElement.addEventListener("scroll", onScroll, { passive: true });
     if (options.synchronousWheelScrolling === true) {
