@@ -63,6 +63,22 @@ range for a frame. Products that must never expose an empty surface should
 give the spacer a lightweight placeholder background or layer; real rows can
 cover it once committed. The bundled demo shows this pattern.
 
+For applications that prefer guaranteed wheel and trackpad rendering over
+threaded scrolling, enable the opt-in synchronous path:
+
+```tsx
+useVirtualizer({
+  count: rows.length,
+  estimateSize: () => 48,
+  synchronousWheelScrolling: true,
+});
+```
+
+This renders the target range before updating `scrollTop`. It intentionally
+moves wheel input onto the main thread, so it should be selected as a product
+tradeoff rather than enabled by default. Touch, keyboard, and scrollbar input
+remain browser-native.
+
 `initialRect` supplies an initial viewport height for server rendering:
 
 ```tsx

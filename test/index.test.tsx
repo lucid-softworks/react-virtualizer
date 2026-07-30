@@ -81,7 +81,8 @@ function fixedSize(): number {
 describe("useVirtualizer", () => {
   beforeEach(() => {
     ResizeObserverMock.instances.length = 0;
-    flushSyncMock.mockClear();
+    flushSyncMock.mockReset();
+    flushSyncMock.mockImplementation((callback) => callback());
     vi.stubGlobal("ResizeObserver", ResizeObserverMock);
   });
 
@@ -148,6 +149,94 @@ describe("useVirtualizer", () => {
     expect(result.current.visibleRange?.startIndex).toBe(0);
   });
 
+  it.each([
+    [WheelEvent.DOM_DELTA_PIXEL, 10, 10],
+    [WheelEvent.DOM_DELTA_LINE, 2, 32],
+    [WheelEvent.DOM_DELTA_PAGE, 1, 100],
+  ])(
+    "renders delta mode %i before synchronously scrolling",
+    (deltaMode, deltaY, expectedOffset) => {
+      const { result } = renderHook(() =>
+        useVirtualizer({
+          ...baseOptions,
+          synchronousWheelScrolling: true,
+        }),
+      );
+      const scrollElement = createElement(100);
+      act(() => result.current.scrollElementRef(scrollElement));
+      flushSyncMock.mockClear();
+      const event = new WheelEvent("wheel", {
+        cancelable: true,
+        deltaMode,
+        deltaY,
+      });
+
+      act(() => scrollElement.dispatchEvent(event));
+
+      expect(event.defaultPrevented).toBe(true);
+      expect(scrollElement.scrollTop).toBe(expectedOffset);
+      expect(flushSyncMock).toHaveBeenCalledOnce();
+    },
+  );
+
+  it("leaves non-scrolling and modified wheel input native", () => {
+    const { result } = renderHook(() =>
+      useVirtualizer({
+        ...baseOptions,
+        synchronousWheelScrolling: true,
+      }),
+    );
+    const scrollElement = createElement(100);
+    act(() => result.current.scrollElementRef(scrollElement));
+    const events = [
+      new WheelEvent("wheel", { cancelable: true, deltaY: 0 }),
+      new WheelEvent("wheel", {
+        cancelable: true,
+        ctrlKey: true,
+        deltaY: 20,
+      }),
+      new WheelEvent("wheel", { cancelable: true, deltaY: -20 }),
+    ];
+    const alreadyHandled = new WheelEvent("wheel", {
+      cancelable: true,
+      deltaY: 20,
+    });
+    alreadyHandled.preventDefault();
+    events.push(alreadyHandled);
+
+    for (const event of events) {
+      act(() => scrollElement.dispatchEvent(event));
+    }
+
+    expect(scrollElement.scrollTop).toBe(0);
+    expect(flushSyncMock).not.toHaveBeenCalled();
+  });
+
+  it("applies measurements after preparing a synchronous wheel range", () => {
+    const { result } = renderHook(() =>
+      useVirtualizer({
+        ...baseOptions,
+        synchronousWheelScrolling: true,
+      }),
+    );
+    const scrollElement = createElement(100);
+    act(() => result.current.scrollElementRef(scrollElement));
+    const itemBeforeTarget = createElement(30, 0);
+    flushSyncMock.mockImplementationOnce((callback) => {
+      callback();
+      result.current.measureElement(itemBeforeTarget);
+    });
+    const event = new WheelEvent("wheel", {
+      cancelable: true,
+      deltaY: 100,
+    });
+
+    act(() => scrollElement.dispatchEvent(event));
+
+    expect(scrollElement.scrollTop).toBe(110);
+    expect(result.current.visibleRange?.startIndex).toBe(5);
+  });
+
   it("applies its initial offset when the container attaches", () => {
     const { result } = renderHook(() =>
       useVirtualizer({
@@ -163,6 +252,20 @@ describe("useVirtualizer", () => {
       endIndex: 16,
       startIndex: 12,
     });
+  });
+
+  it("accepts an anchor correction before its container attaches", () => {
+    const { result } = renderHook(() =>
+      useVirtualizer({
+        ...baseOptions,
+        initialOffset: 40,
+        initialRect: { height: 40 },
+      }),
+    );
+
+    act(() => result.current.measureElement(createElement(30, 0)));
+
+    expect(result.current.visibleRange?.startIndex).toBe(2);
   });
 
   it("measures items and reacts to later resizes", () => {

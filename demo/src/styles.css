@@ -136,13 +136,6 @@ h1 {
 }
 
 .viewport {
-  contain: strict;
-  height: min(560px, 64vh);
-  overflow: auto;
-  overscroll-behavior: contain;
-}
-
-.spacer {
   background: repeating-linear-gradient(
     to bottom,
     #f9fbf6 0,
@@ -154,6 +147,13 @@ h1 {
     #e1e6e2 115px,
     #e1e6e2 116px
   );
+  contain: strict;
+  height: min(560px, 64vh);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.spacer {
   position: relative;
   width: 100%;
 }

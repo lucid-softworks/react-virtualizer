@@ -37,6 +37,7 @@ export function App(): ReactElement {
     initialRect: { height: 560 },
     overscan: 6,
     overscanPixels: 4_480,
+    synchronousWheelScrolling: true,
   });
 
   function prepend(): void {

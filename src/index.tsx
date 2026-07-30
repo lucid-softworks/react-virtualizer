@@ -35,6 +35,12 @@ export interface UseVirtualizerOptions<
    * Defaults to true.
    */
   readonly preserveAnchorOnChange?: boolean;
+  /**
+   * Render wheel and trackpad destinations before updating the element scroll
+   * position. Prevents compositor checkerboarding at the cost of moving wheel
+   * scrolling onto the main thread. Defaults to false.
+   */
+  readonly synchronousWheelScrolling?: boolean;
 }
 
 export interface ReactScrollToOptions {
@@ -115,6 +121,7 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
   const scrollElementReference = useRef<HTMLElement | null>(null);
   const itemResizeObserverReference = useRef<ResizeObserver | null>(null);
   const observedItemsReference = useRef(new Map<number, HTMLElement>());
+  const preparingScrollReference = useRef(false);
   const renderedBoundsReference = useRef<RenderedBounds | undefined>(undefined);
 
   const snapshot = useSyncExternalStore(
@@ -125,8 +132,11 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
 
   const applyAdjustment = useCallback(
     (adjustment: number): void => {
+      if (adjustment === 0 || preparingScrollReference.current) {
+        return;
+      }
       const element = scrollElementReference.current;
-      if (element === null || adjustment === 0) {
+      if (element === null) {
         return;
       }
       element.scrollTop += adjustment;
@@ -231,7 +241,38 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
         instance.setViewport(offset, viewportSize);
       }
     };
+    const onWheel = (event: WheelEvent): void => {
+      if (event.defaultPrevented || event.ctrlKey || event.deltaY === 0) {
+        return;
+      }
+      const delta =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? event.deltaY * 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? event.deltaY * scrollElement.clientHeight
+            : event.deltaY;
+      const target = instance.clampOffset(
+        Math.max(0, scrollElement.scrollTop + delta),
+      );
+      if (target === scrollElement.scrollTop) {
+        return;
+      }
+
+      event.preventDefault();
+      preparingScrollReference.current = true;
+      try {
+        flushSync(() =>
+          instance.setViewport(target, scrollElement.clientHeight),
+        );
+      } finally {
+        preparingScrollReference.current = false;
+      }
+      scrollElement.scrollTop = instance.scrollOffset;
+    };
     scrollElement.addEventListener("scroll", onScroll, { passive: true });
+    if (options.synchronousWheelScrolling === true) {
+      scrollElement.addEventListener("wheel", onWheel, { passive: false });
+    }
     const observer =
       typeof ResizeObserver === "undefined"
         ? undefined
@@ -240,10 +281,11 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
 
     return () => {
       scrollElement.removeEventListener("scroll", onScroll);
+      scrollElement.removeEventListener("wheel", onWheel);
       observer?.disconnect();
       scrollElementReference.current = null;
     };
-  }, [instance, scrollElement]);
+  }, [instance, options.synchronousWheelScrolling, scrollElement]);
 
   useBrowserLayoutEffect(() => {
     const observer = itemResizeObserverReference.current;
