@@ -5,15 +5,15 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@lucid-softworks/virtualizer': github:lucid-softworks/virtualizer#c76793d0e69945f6b136847c96c83af30ccbcc92
+  '@lucid-softworks/virtualizer': github:lucid-softworks/virtualizer#a4cfa0614c5886031374de501450a361fd2936da
 
 importers:
 
   .:
     dependencies:
       '@lucid-softworks/virtualizer':
-        specifier: github:lucid-softworks/virtualizer#c76793d0e69945f6b136847c96c83af30ccbcc92
-        version: https://codeload.github.com/lucid-softworks/virtualizer/tar.gz/c76793d0e69945f6b136847c96c83af30ccbcc92
+        specifier: github:lucid-softworks/virtualizer#a4cfa0614c5886031374de501450a361fd2936da
+        version: https://codeload.github.com/lucid-softworks/virtualizer/tar.gz/a4cfa0614c5886031374de501450a361fd2936da
     devDependencies:
       '@lucid-softworks/oxfmt-config':
         specifier: ^0.1.1
@@ -344,8 +344,8 @@ packages:
     resolution: {integrity: sha512-PEEeHrK59OpQ0kahD2ugmjxqtd9AhYIeLwZ6yu9BAJOv9BcdfcRduA9Ntb7BOrlx3bzFYKp2sHs80sLO/CLEzw==}
     engines: {node: '>=22'}
 
-  '@lucid-softworks/virtualizer@https://codeload.github.com/lucid-softworks/virtualizer/tar.gz/c76793d0e69945f6b136847c96c83af30ccbcc92':
-    resolution: {gitHosted: true, integrity: sha512-430p34RNO+KduFN9LHOAE7bDBlv9LkpfOXK666wMe+qbI5Vx6ENaY2epn6axjQtOP7MZQEcluvjAc0hgikwkTA==, tarball: https://codeload.github.com/lucid-softworks/virtualizer/tar.gz/c76793d0e69945f6b136847c96c83af30ccbcc92}
+  '@lucid-softworks/virtualizer@https://codeload.github.com/lucid-softworks/virtualizer/tar.gz/a4cfa0614c5886031374de501450a361fd2936da':
+    resolution: {gitHosted: true, integrity: sha512-ZHRvMhhjkZQzhoEkPLI0At5lDkd6/M0exUbNjYXRhsNM4Rpdi+GdFNTRATWHKy6j+nbFx7YGogy/ou0TTHxM+A==, tarball: https://codeload.github.com/lucid-softworks/virtualizer/tar.gz/a4cfa0614c5886031374de501450a361fd2936da}
     version: 0.0.0
     engines: {node: '>=22'}
 
@@ -2882,7 +2882,7 @@ snapshots:
 
   '@lucid-softworks/tsconfig@0.1.0': {}
 
-  '@lucid-softworks/virtualizer@https://codeload.github.com/lucid-softworks/virtualizer/tar.gz/c76793d0e69945f6b136847c96c83af30ccbcc92': {}
+  '@lucid-softworks/virtualizer@https://codeload.github.com/lucid-softworks/virtualizer/tar.gz/a4cfa0614c5886031374de501450a361fd2936da': {}
 
   '@lucid-softworks/vitest-config@0.1.1(@vitest/coverage-v8@4.1.10)(vitest@4.1.10)':
     dependencies:

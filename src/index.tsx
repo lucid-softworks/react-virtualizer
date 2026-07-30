@@ -16,6 +16,7 @@ import {
   useSyncExternalStore,
   type RefCallback,
 } from "react";
+import { flushSync } from "react-dom";
 
 export interface InitialRect {
   readonly height: number;
@@ -34,6 +35,12 @@ export interface UseVirtualizerOptions<
    * Defaults to true.
    */
   readonly preserveAnchorOnChange?: boolean;
+  /**
+   * Render wheel and trackpad destinations before updating the element scroll
+   * position. Prevents compositor checkerboarding at the cost of moving wheel
+   * scrolling onto the main thread. Defaults to false.
+   */
+  readonly synchronousWheelScrolling?: boolean;
 }
 
 export interface ReactScrollToOptions {
@@ -59,6 +66,11 @@ export interface ReactVirtualizer<TKey extends VirtualItemKey = number> {
   ) => void;
   readonly totalSize: number;
   readonly visibleRange: VirtualRange | undefined;
+}
+
+interface RenderedBounds {
+  readonly end: number;
+  readonly start: number;
 }
 
 const useBrowserLayoutEffect =
@@ -109,6 +121,8 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
   const scrollElementReference = useRef<HTMLElement | null>(null);
   const itemResizeObserverReference = useRef<ResizeObserver | null>(null);
   const observedItemsReference = useRef(new Map<number, HTMLElement>());
+  const preparingScrollReference = useRef(false);
+  const renderedBoundsReference = useRef<RenderedBounds | undefined>(undefined);
 
   const snapshot = useSyncExternalStore(
     instance.subscribe,
@@ -116,10 +130,32 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
     instance.getSnapshot,
   );
 
+  const renderScrollTarget = useCallback(
+    (
+      element: HTMLElement,
+      target: number,
+      updateScrollPosition: boolean,
+    ): void => {
+      preparingScrollReference.current = true;
+      try {
+        flushSync(() => instance.setViewport(target, element.clientHeight));
+      } finally {
+        preparingScrollReference.current = false;
+      }
+      if (updateScrollPosition) {
+        setElementScroll(element, instance.scrollOffset, "auto");
+      }
+    },
+    [instance],
+  );
+
   const applyAdjustment = useCallback(
     (adjustment: number): void => {
+      if (adjustment === 0 || preparingScrollReference.current) {
+        return;
+      }
       const element = scrollElementReference.current;
-      if (element === null || adjustment === 0) {
+      if (element === null) {
         return;
       }
       element.scrollTop += adjustment;
@@ -184,10 +220,20 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
     options.estimateSize,
     options.getItemKey,
     options.overscan,
+    options.overscanPixels,
     options.paddingEnd,
     options.paddingStart,
     options.preserveAnchorOnChange,
   ]);
+
+  useBrowserLayoutEffect(() => {
+    const firstItem = snapshot.items[0];
+    const lastItem = snapshot.items.at(-1);
+    renderedBoundsReference.current =
+      firstItem === undefined || lastItem === undefined
+        ? undefined
+        : { end: lastItem.end, start: firstItem.start };
+  }, [snapshot.items]);
 
   useBrowserLayoutEffect(() => {
     scrollElementReference.current = scrollElement;
@@ -200,9 +246,47 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
     }
     instance.setViewport(scrollElement.scrollTop, scrollElement.clientHeight);
     const onScroll = (): void => {
-      instance.setViewport(scrollElement.scrollTop, scrollElement.clientHeight);
+      const offset = scrollElement.scrollTop;
+      const viewportSize = scrollElement.clientHeight;
+      const renderedBounds = renderedBoundsReference.current;
+      const escapedRenderedBounds =
+        renderedBounds === undefined ||
+        offset < renderedBounds.start ||
+        offset + viewportSize > renderedBounds.end;
+
+      if (escapedRenderedBounds) {
+        flushSync(() => instance.setViewport(offset, viewportSize));
+      } else {
+        instance.setViewport(offset, viewportSize);
+      }
+    };
+    const onWheel = (event: WheelEvent): void => {
+      if (event.defaultPrevented || event.ctrlKey || event.deltaY === 0) {
+        return;
+      }
+      const delta =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? event.deltaY * 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? event.deltaY * scrollElement.clientHeight
+            : event.deltaY;
+      const target = instance.clampOffset(
+        Math.max(0, scrollElement.scrollTop + delta),
+      );
+      if (target === scrollElement.scrollTop) {
+        return;
+      }
+
+      const controlsScrollPosition = event.cancelable;
+      if (controlsScrollPosition) {
+        event.preventDefault();
+      }
+      renderScrollTarget(scrollElement, target, controlsScrollPosition);
     };
     scrollElement.addEventListener("scroll", onScroll, { passive: true });
+    if (options.synchronousWheelScrolling === true) {
+      scrollElement.addEventListener("wheel", onWheel, { passive: false });
+    }
     const observer =
       typeof ResizeObserver === "undefined"
         ? undefined
@@ -211,10 +295,16 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
 
     return () => {
       scrollElement.removeEventListener("scroll", onScroll);
+      scrollElement.removeEventListener("wheel", onWheel);
       observer?.disconnect();
       scrollElementReference.current = null;
     };
-  }, [instance, scrollElement]);
+  }, [
+    instance,
+    options.synchronousWheelScrolling,
+    renderScrollTarget,
+    scrollElement,
+  ]);
 
   useBrowserLayoutEffect(() => {
     const observer = itemResizeObserverReference.current;
@@ -244,12 +334,13 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
       }
       const target = instance.clampOffset(offset);
       const behavior = scrollOptions.behavior ?? "auto";
-      setElementScroll(scrollElement, target, behavior);
       if (behavior === "auto") {
-        instance.setViewport(target, scrollElement.clientHeight);
+        renderScrollTarget(scrollElement, target, true);
+      } else {
+        setElementScroll(scrollElement, target, behavior);
       }
     },
-    [instance, scrollElement],
+    [instance, renderScrollTarget, scrollElement],
   );
 
   const scrollToIndex = useCallback(

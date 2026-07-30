@@ -36,6 +36,8 @@ export function App(): ReactElement {
     getItemKey,
     initialRect: { height: 560 },
     overscan: 6,
+    overscanPixels: 4_480,
+    synchronousWheelScrolling: true,
   });
 
   function prepend(): void {
