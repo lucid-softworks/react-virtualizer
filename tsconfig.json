@@ -1,0 +1,22 @@
+{
+  "extends": "@lucid-softworks/tsconfig/test.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@lucid-softworks/react-virtualizer": ["./src/index.tsx"]
+    },
+    "types": ["node", "vitest"]
+  },
+  "include": [
+    "benchmark/**/*.ts",
+    "demo/**/*.ts",
+    "demo/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/**/*.ts",
+    "test/**/*.tsx",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ]
+}

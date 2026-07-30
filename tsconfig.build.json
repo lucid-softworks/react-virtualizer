@@ -1,0 +1,12 @@
+{
+  "extends": "@lucid-softworks/tsconfig/web.json",
+  "compilerOptions": {
+    "emitDeclarationOnly": true,
+    "jsx": "react-jsx",
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["test/**/*.ts", "test/**/*.tsx"]
+}

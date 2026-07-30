@@ -1,0 +1,209 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700&display=swap");
+
+:root {
+  color: #1d2724;
+  background: #edf0e9;
+  font-family: "Manrope", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  border: 1px solid #bcc6bf;
+  border-radius: 999px;
+  background: #f8faf5;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.65rem 1rem;
+}
+
+button:hover {
+  border-color: #68766e;
+}
+
+button:focus-visible,
+.viewport:focus-visible {
+  outline: 3px solid #d7ff4f;
+  outline-offset: 2px;
+}
+
+button.primary {
+  border-color: #203b33;
+  background: #203b33;
+  color: #f7ffe2;
+}
+
+main {
+  min-height: 100vh;
+  padding: clamp(1.25rem, 4vw, 4rem);
+}
+
+.hero {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: 0 auto 2rem;
+  max-width: 1120px;
+}
+
+.eyebrow {
+  color: #597066;
+  font-family: "DM Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+}
+
+h1 {
+  font-size: clamp(2.2rem, 5vw, 4.8rem);
+  letter-spacing: -0.06em;
+  line-height: 0.96;
+  margin: 0;
+  max-width: 850px;
+}
+
+.intro {
+  color: #59645f;
+  line-height: 1.65;
+  max-width: 680px;
+}
+
+.metrics {
+  align-self: end;
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+}
+
+.metrics div {
+  min-width: 88px;
+}
+
+.metrics dt,
+.column-labels {
+  color: #6d7772;
+  font-family: "DM Mono", monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.metrics dd {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0;
+}
+
+.demo {
+  border: 1px solid #b9c3bc;
+  border-radius: 20px;
+  background: #f9fbf6;
+  box-shadow: 0 24px 70px rgb(39 54 47 / 12%);
+  margin: auto;
+  max-width: 1120px;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding: 1rem;
+}
+
+.column-labels,
+.row {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 90px minmax(0, 1fr) 120px;
+}
+
+.column-labels {
+  border-block: 1px solid #dce2dd;
+  padding: 0.7rem 1.25rem;
+}
+
+.viewport {
+  height: min(560px, 64vh);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.spacer {
+  position: relative;
+  width: 100%;
+}
+
+.row {
+  align-items: center;
+  border-bottom: 1px solid #e1e6e2;
+  left: 0;
+  min-height: 58px;
+  padding: 0.8rem 1.25rem;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.row:nth-child(2n) {
+  background: #f4f7f1;
+}
+
+.row strong,
+.row small {
+  display: block;
+}
+
+.row strong {
+  font-size: 0.86rem;
+}
+
+.row small {
+  color: #6b7670;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  margin-top: 0.2rem;
+}
+
+.index,
+.row code {
+  color: #52625a;
+  font-family: "DM Mono", monospace;
+  font-size: 0.7rem;
+}
+
+.row code {
+  justify-self: end;
+}
+
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics {
+    justify-content: space-between;
+  }
+
+  .column-labels,
+  .row {
+    grid-template-columns: 60px minmax(0, 1fr);
+  }
+
+  .column-labels span:last-child,
+  .row code {
+    display: none;
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "name": "@lucid-softworks/react-virtualizer",
+  "version": "0.0.0",
+  "description": "React bindings for headless list virtualization.",
+  "keywords": [
+    "headless",
+    "hook",
+    "javascript",
+    "list",
+    "react",
+    "scrolling",
+    "typescript",
+    "virtualization",
+    "virtualizer",
+    "windowing"
+  ],
+  "homepage": "https://github.com/lucid-softworks/react-virtualizer#readme",
+  "bugs": {
+    "url": "https://github.com/lucid-softworks/react-virtualizer/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucid-softworks/react-virtualizer.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "bench": "vitest bench --run",
+    "bench:smoke": "VITEST_BENCHMARK_SMOKE=1 vitest bench --run",
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "check": "oxfmt --check . && oxlint . && pnpm demo:build && tsc -p tsconfig.json && vitest run --coverage && pnpm run doctor && publint && VITEST_BENCHMARK_SMOKE=1 vitest bench --run",
+    "demo:build": "pnpm build && vite build demo --config demo/vite.config.ts",
+    "demo:dev": "vite demo --config demo/vite.config.ts",
+    "doctor": "react-doctor . --warnings --blocking warning --no-telemetry",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint .",
+    "pack:check": "publint",
+    "test": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@lucid-softworks/virtualizer": "^0.1.0"
+  },
+  "devDependencies": {
+    "@lucid-softworks/oxfmt-config": "^0.1.1",
+    "@lucid-softworks/oxlint-config": "^0.1.0",
+    "@lucid-softworks/tsconfig": "^0.1.0",
+    "@lucid-softworks/vitest-config": "^0.1.1",
+    "@testing-library/react": "16.3.2",
+    "@types/node": "26.1.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.4",
+    "@vitest/coverage-v8": "4.1.10",
+    "jsdom": "29.1.1",
+    "oxfmt": "0.60.0",
+    "oxlint": "1.75.0",
+    "publint": "0.3.22",
+    "react": "19.2.8",
+    "react-doctor": "0.9.1",
+    "react-dom": "19.2.8",
+    "typescript": "7.0.2",
+    "vite": "8.1.5",
+    "vitest": "4.1.10"
+  },
+  "peerDependencies": {
+    "react": "^18.3.0 || ^19.0.0",
+    "react-dom": "^18.3.0 || ^19.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.16.0"
+}
