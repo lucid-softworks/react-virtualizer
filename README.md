@@ -101,6 +101,6 @@ virtualizer.scrollToOffset(0, { behavior: "smooth" });
 Item alignment can be `start`, `center`, `end`, or `auto`.
 
 Automatic `scrollToOffset` and `scrollToIndex` calls commit their target range
-before moving the element. This makes them suitable for controlled scrollbars
-that need deterministic rendering. Smooth scrolling remains browser-native
-because it traverses intermediate offsets over time.
+before moving the element, preventing blank frames during programmatic jumps.
+Smooth scrolling remains browser-native because it traverses intermediate
+offsets over time.
