@@ -13,6 +13,7 @@ export function ActivityList({ rows }: { rows: readonly Activity[] }) {
     estimateSize: () => 48,
     getItemKey: (index) => rows[index]!.id,
     overscan: 5,
+    overscanPixels: 500,
   });
 
   return (
@@ -50,6 +51,12 @@ The scroll container is observed for scrolling and resizing. Measured items use
 `ResizeObserver`, so dynamic content can change height without invalidating the
 rest of the list. A stable `getItemKey` allows measurements and the visible
 anchor to survive prepends or reordering.
+
+`overscanPixels` keeps a scroll-axis buffer mounted around the viewport. A
+buffer of one or two viewport lengths helps native scrolling stay inside the
+committed DOM range. If a high-velocity scroll still escapes that range, the
+React adapter synchronously commits the new range to avoid exposing the empty
+spacer.
 
 `initialRect` supplies an initial viewport height for server rendering:
 

@@ -16,6 +16,7 @@ import {
   useSyncExternalStore,
   type RefCallback,
 } from "react";
+import { flushSync } from "react-dom";
 
 export interface InitialRect {
   readonly height: number;
@@ -59,6 +60,11 @@ export interface ReactVirtualizer<TKey extends VirtualItemKey = number> {
   ) => void;
   readonly totalSize: number;
   readonly visibleRange: VirtualRange | undefined;
+}
+
+interface RenderedBounds {
+  readonly end: number;
+  readonly start: number;
 }
 
 const useBrowserLayoutEffect =
@@ -109,6 +115,7 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
   const scrollElementReference = useRef<HTMLElement | null>(null);
   const itemResizeObserverReference = useRef<ResizeObserver | null>(null);
   const observedItemsReference = useRef(new Map<number, HTMLElement>());
+  const renderedBoundsReference = useRef<RenderedBounds | undefined>(undefined);
 
   const snapshot = useSyncExternalStore(
     instance.subscribe,
@@ -184,10 +191,20 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
     options.estimateSize,
     options.getItemKey,
     options.overscan,
+    options.overscanPixels,
     options.paddingEnd,
     options.paddingStart,
     options.preserveAnchorOnChange,
   ]);
+
+  useBrowserLayoutEffect(() => {
+    const firstItem = snapshot.items[0];
+    const lastItem = snapshot.items.at(-1);
+    renderedBoundsReference.current =
+      firstItem === undefined || lastItem === undefined
+        ? undefined
+        : { end: lastItem.end, start: firstItem.start };
+  }, [snapshot.items]);
 
   useBrowserLayoutEffect(() => {
     scrollElementReference.current = scrollElement;
@@ -200,7 +217,19 @@ export function useVirtualizer<TKey extends VirtualItemKey = number>(
     }
     instance.setViewport(scrollElement.scrollTop, scrollElement.clientHeight);
     const onScroll = (): void => {
-      instance.setViewport(scrollElement.scrollTop, scrollElement.clientHeight);
+      const offset = scrollElement.scrollTop;
+      const viewportSize = scrollElement.clientHeight;
+      const renderedBounds = renderedBoundsReference.current;
+      const escapedRenderedBounds =
+        renderedBounds === undefined ||
+        offset < renderedBounds.start ||
+        offset + viewportSize > renderedBounds.end;
+
+      if (escapedRenderedBounds) {
+        flushSync(() => instance.setViewport(offset, viewportSize));
+      } else {
+        instance.setViewport(offset, viewportSize);
+      }
     };
     scrollElement.addEventListener("scroll", onScroll, { passive: true });
     const observer =

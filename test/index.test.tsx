@@ -3,6 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useVirtualizer, type UseVirtualizerOptions } from "../src/index.js";
 
+const flushSyncMock = vi.hoisted(() =>
+  vi.fn<(callback: () => void) => void>((callback) => callback()),
+);
+
+vi.mock("react-dom", async (importOriginal) => {
+  const original = await importOriginal<typeof import("react-dom")>();
+  return { ...original, flushSync: flushSyncMock };
+});
+
 class ResizeObserverMock implements ResizeObserver {
   static readonly instances: ResizeObserverMock[] = [];
   readonly #callback: ResizeObserverCallback;
@@ -72,6 +81,7 @@ function fixedSize(): number {
 describe("useVirtualizer", () => {
   beforeEach(() => {
     ResizeObserverMock.instances.length = 0;
+    flushSyncMock.mockClear();
     vi.stubGlobal("ResizeObserver", ResizeObserverMock);
   });
 
@@ -93,11 +103,49 @@ describe("useVirtualizer", () => {
       scrollElement.dispatchEvent(new Event("scroll"));
     });
 
+    expect(flushSyncMock).toHaveBeenCalledOnce();
     expect(result.current.visibleRange).toEqual({
       endIndex: 14,
       startIndex: 10,
     });
     expect(result.current.totalSize).toBe(2000);
+  });
+
+  it("does not force a commit while scrolling inside rendered overscan", () => {
+    const { result } = renderHook(() =>
+      useVirtualizer({
+        ...baseOptions,
+        overscanPixels: 100,
+      }),
+    );
+    const scrollElement = createElement(100);
+    act(() => result.current.scrollElementRef(scrollElement));
+
+    act(() => {
+      scrollElement.scrollTop = 40;
+      scrollElement.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(flushSyncMock).not.toHaveBeenCalled();
+    expect(result.current.visibleRange?.startIndex).toBe(2);
+  });
+
+  it("forces a new range when fast scrolling escapes in either direction", () => {
+    const { result } = renderHook(() => useVirtualizer(baseOptions));
+    const scrollElement = createElement(100);
+    act(() => result.current.scrollElementRef(scrollElement));
+
+    act(() => {
+      scrollElement.scrollTop = 1_000;
+      scrollElement.dispatchEvent(new Event("scroll"));
+    });
+    act(() => {
+      scrollElement.scrollTop = 0;
+      scrollElement.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(flushSyncMock).toHaveBeenCalledTimes(2);
+    expect(result.current.visibleRange?.startIndex).toBe(0);
   });
 
   it("applies its initial offset when the container attaches", () => {
